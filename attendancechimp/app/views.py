@@ -40,11 +40,11 @@ def time_view(request):
     return HttpResponse(ct_formatted)
 
 def sum_view(request):
-    """Reads query parameters, converts them to a #, returns JSON response"""
+    """Reads query parameters, converts them to a #, returns response"""
     first_query = request.GET.get('n1')
     second_query = request.GET.get('n2')
     value = float(first_query) + float(second_query)
-    return HttpResponse(f"<p>sum: {value}</p>")
+    return HttpResponse(f"<p>{value}</p>")
     
 
 
