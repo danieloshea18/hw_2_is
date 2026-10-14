@@ -44,7 +44,7 @@ def sum_view(request):
     first_query = request.GET.get('n1')
     second_query = request.GET.get('n2')
     value = float(first_query) + float(second_query)
-    return JsonResponse({"sum": value})
+    return HttpResponse(f"<p>sum: {value}</p>")
     
 
 
