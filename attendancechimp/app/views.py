@@ -33,6 +33,19 @@ def index(request):
     context = {}
     return render(request, 'app/index.html', context)
 
+def time_view(request):
+    """Returns current Central time formatted as HH:MM."""
+    time = datetime.now(CDT)
+    ct_formatted = time.strftime('%H:%M')
+    return HttpResponse(ct_formatted)
+
+def sum_view(request):
+    """Reads query parameters, converts them to a #, returns JSON response"""
+    first_query = request.GET.get('n1')
+    second_query = request.GET.get('n2')
+    value = float(first_query) + float(second_query)
+    return JsonResponse({"sum": value})
+    
 
 
 # ---------------------------------------------------------------------------
