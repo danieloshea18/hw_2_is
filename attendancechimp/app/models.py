@@ -73,7 +73,7 @@ class Lecture(models.Model):
     lecture_id = models.IntegerField(primary_key=True)
     course_id = models.ForeignKey(Course, on_delete=models.CASCADE)
     date = models.DateField(null=False)
-    qr_identifier = models.CharField(max_length=256, null=False)
+    qr_identifier = models.CharField(max_length=256, null=False, unique=True)
     
 # ---------------------------------------------------------------------------
 # QR Code Upload
