@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__) # set up tracking, auditing, and debugging
 # ---------------------------------------------------------------------------
 
 class InstructorProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     instructor_id = models.IntegerField(primary_key=True)
     last_name = models.CharField(max_length=256, null=False)
     first_name = models.CharField(max_length=256, null=False)
@@ -40,6 +41,7 @@ class InstructorProfile(models.Model):
     email = models.CharField(max_length=25, null=False)
 
 class StudentProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     student_id = models.IntegerField(primary_key=True)
     last_name = models.CharField(max_length=256, null=False)
     first_name = models.CharField(max_length=256, null=False)
