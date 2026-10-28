@@ -12,9 +12,19 @@
 <body>
 <div class="bio">
     <h1>AttendanceChimp</h1>
-    <p>Electronic class attendance tracking application.</p>
+    <p>AttendanceChimp is an electronic class attendance app that uses QR codes and a database linking students to their courses to verify individual participation. 
+</p>
     <hr>
 
+    <p>
+        {% if user.is_authenticated %}
+            <span class="username"><strong>{{ user.username }}</strong></span>
+        {% else %}
+            <span class="username">Not logged in.</span>
+        {% endif %}
+    </p>
+
+    <p>Current time (CST): {{ current_time }}</p>
 </div>
 </body>
 </html>

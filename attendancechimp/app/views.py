@@ -16,10 +16,12 @@ import zoneinfo
 import json
 import io
 
-# from .models import (InstructorProfile, StudentProfile, Course, Enrollment,
+#from .models import (InstructorProfile, StudentProfile, Course, Enrollment,
 #                      Lecture, QRCodeUpload, is_instructor, is_student,
 #                      getUploadsForCourse)
 
+from .models import InstructorProfile, StudentProfile
+ 
 CDT = zoneinfo.ZoneInfo("America/Chicago")
 
 
@@ -29,8 +31,13 @@ CDT = zoneinfo.ZoneInfo("America/Chicago")
 
 def index(request):
     """Render the home page (index.html)."""
-
-    context = {}
+    
+    time = datetime.now(CDT)
+    current_time = time.strftime('%H:%M')
+    context = {
+        'current_time': current_time,
+        'user': request.user
+    }
     return render(request, 'app/index.html', context)
 
 def time_view(request):
@@ -52,8 +59,41 @@ def sum_view(request):
 # HW4  — user creation
 # ---------------------------------------------------------------------------
 
+from django.views.decorators.http import require_GET
 
+@require_GET
+def new_user(request):
+    """Displays a sign-up form to new users"""
+    return render(request, 'app/new.html', {}) 
 
+@csrf_exempt
+def create_user(request):
+    """Creates a new User with a student or instructor profile."""
+    if request.method != 'POST':
+        return HttpResponseBadRequest("Only POST requests are allowed")
+
+    email = request.POST.get('email')
+    user_name = request.POST.get('user_name')
+    password = request.POST.get('password')
+    is_student = request.POST.get('is_student')
+
+    if not (email and user_name and password and is_student):
+        return HttpResponseBadRequest("Missing required field(s)")
+   
+    if User.objects.filter(email=email).exists():
+        return HttpResponseBadRequest("Email already registered")
+    if User.objects.filter(username=user_name).exists():
+        return HttpResponseBadRequest("Username already taken")
+
+    user = User.objects.create_user(username=user_name, email=email, password=password)
+    if is_student in ('0', 'instructor'):
+        InstructorProfile.objects.create(user=user)
+    else:
+        StudentProfile.objects.create(user=user)
+    
+    login(request, user)
+    return HttpResponse("New User created.", status=200)
+ 
 # ---------------------------------------------------------------------------
 # HW5  — courses, lectures, QR uploads, dump
 # ---------------------------------------------------------------------------
