@@ -98,8 +98,90 @@ def create_user(request):
 # HW5  — courses, lectures, QR uploads, dump
 # ---------------------------------------------------------------------------
 
+@login_required
+def new_course(request):
+    """Renders form for course creation"""
+    return render(request, "app/new_course.html")
 
+@login_required
+def new_lecture(request):
+    """Renders form for creating a lecture"""
+    return render(request, 'app/new_lecture.html')
 
+@login_required
+def new_qr_upload(request):
+    """Renders form for uploading a QR code"""
+    return render(request, "app/new_qr_upload.html")
+
+@csrf_exempt
+def createCourse(request):
+    """Creates a new Course row using POST data"""
+    if request.method != 'POST':
+        return HttpResponse(status=405)
+    if not request.user.is_authenticated or not InstructorProfile.objects.filter(user=request.user).exists():
+        return HttpResponse("Error: user must be an instructor", status=401)
+    
+    course_name = request.POST.get('course-name')
+    start_time = request.POST.get('start-time')
+    end_time = request.POST.get('end-time')
+    
+    day_fields = {'day-mon': 'Mon', 'day-tue': 'Tue', 'day-wed': 'Wed', 'day-thu': 'Thu', 'day-fri': 'Fri'}
+    chosen_days = [value for key, value in day_fields.items() if request.POST.get(key)]
+    
+    course = Course.objects.create(name=course_name, start_time=start_time, end_time=end_time, days=",".join(chosen_days), instructor=request.user.instructorprofile)
+    
+    return HttpResponse("You have successfully created a course.", status=200)
+
+@csrf_exempt
+def create_lecture(request):
+    """Creates a new lecture linked to a particular course"""
+    if request.method != 'POST':
+        return HttpResponse(status=405)
+    if not request.user.is_authenticated or not InstructorProfile.objects.filter(user=request.user).exists():
+        return HttpResponse("Error: User must be an instructor.", status=401)
+    
+    course_name = request.POST.get('choice')
+    try:
+        course = Course.objects.get(name=course_name)
+    except Course.DoesNotExist:
+        return HttpResponse("Course does not exist.", status=404)
+    
+    Lecture.objects.create(course=course)
+    return HttpResponse("You have successfully created a new lecture", status=200)
+
+@csrf_exempt
+def create_qr_code_upload(request):
+    """Create a QRCodeUpload from a student's image upload"""
+    if request.method != 'POST':
+        return HttpResponse(status=405)
+    if not request.user.is_authenticated or not StudentProfile.objects.filter(user=request.user).exists():
+        return HttpResponse("Error: User must be a student.", status=401)
+    
+    image = request.FILES.get("imageUpload")
+    if not image:
+        return HttpResponse("Error: imageUpload file is missing.", status=400)
+
+    QRCodeUpload.objects.create(student=request.user.studentprofile, image=image, upload_time=timezone.now())
+    return HttpResponse("Your QR code has been successfully uploaded.", status=200)
+
+@require_GET
+def dumpUploads(request):
+    """Returns a JSON list of QR code uploads"""
+    if request.method != 'GET':
+        return HttpResponse(status=405)
+    valid_instructor = request.user.is_authenticated and hasattr(request.user, 'instructorprofile')
+    if not valid_instructor:
+        return HttpResponse("Error: You are not a verified instructor.", status=401)
+    
+    data = [
+        {
+            "username": upload.student.username,
+            "upload_time": upload.upload_time.strftime("%Y-%m-%d %H:%M:%S")
+        }
+        for upload in QRCodeUpload.objects.select_related("student")
+    ]
+    return JsonResponse(data, safe=False)
+    
 # ---------------------------------------------------------------------------
 # HW6  — getUploads
 # ---------------------------------------------------------------------------
