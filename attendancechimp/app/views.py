@@ -12,10 +12,12 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login
+from django.utils import timezone
 from datetime import datetime
 import zoneinfo
 import json
 import io
+import uuid
 
 from .models import (InstructorProfile, StudentProfile, Course, Enrollment,
                       Lecture, QRCodeUpload)
@@ -142,7 +144,7 @@ def create_lecture(request):
     
     course_name = request.POST.get('choice')
     try:
-        course = Course.objects.get(name=course_name)
+        course = Course.objects.get(course_title=course_name)
     except Course.DoesNotExist:
         return HttpResponse("Course does not exist.", status=404)
     
@@ -161,7 +163,11 @@ def create_qr_code_upload(request):
     if not image:
         return HttpResponse("Error: imageUpload file is missing.", status=400)
 
-    QRCodeUpload.objects.create(student=request.user.studentprofile, image=image, upload_time=timezone.now())
+    QRCodeUpload.objects.create(
+        qrcode_id=str(uuid.uuid4()),
+        student_id=request.user.studentprofile,
+        pictur=image_file
+    )
     return HttpResponse("Your QR code has been successfully uploaded.", status=200)
 
 @require_GET
@@ -173,12 +179,13 @@ def dump_uploads(request):
     if not valid_instructor:
         return HttpResponse("Error: You are not a verified instructor.", status=401)
     
+    uploads = QRCodeUpload.objects.select_related('student_id__user').all()
     data = [
         {
-            "username": upload.student.username,
+            "username": upload.student_id.user.username,
             "upload_time": upload.upload_time.strftime("%Y-%m-%d %H:%M:%S")
         }
-        for upload in QRCodeUpload.objects.select_related("student")
+        for upload in uploads
     ]
     return JsonResponse(data, safe=False)
     
