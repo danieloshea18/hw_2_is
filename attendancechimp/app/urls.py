@@ -2,6 +2,7 @@ from django.urls import path, include
 from . import views
 
 urlpatterns = [
+    path('dumpUploads', views.dump_uploads, name='dump_uploads'),
     path('createQRCodeUpload', views.create_qr_code_upload, name='create_qr_code_upload'),
     path('createLecture', views.create_lecture, name='create_lecture'),
     path('createCourse', views.create_course, name='create_course'),

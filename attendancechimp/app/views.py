@@ -17,7 +17,7 @@ import zoneinfo
 import json
 import io
 
-#from .models import (InstructorProfile, StudentProfile, Course, Enrollment,
+from .models import (InstructorProfile, StudentProfile, Course, Enrollment,
 #                      Lecture, QRCodeUpload, is_instructor, is_student,
 #                      getUploadsForCourse)
 
@@ -166,7 +166,7 @@ def create_qr_code_upload(request):
     return HttpResponse("Your QR code has been successfully uploaded.", status=200)
 
 @require_GET
-def dumpUploads(request):
+def dump_uploads(request):
     """Returns a JSON list of QR code uploads"""
     if request.method != 'GET':
         return HttpResponse(status=405)

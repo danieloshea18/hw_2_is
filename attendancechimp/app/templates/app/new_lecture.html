@@ -1,20 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head><title>New Lecture</title></head>
 <body>
-  <h1>Create Lecture</h1>
-  <form method="POST" action="/app/createLecture/">
-    {% csrf_token %}
-    <label>Course ID:
-      <input type="number" name="course_id" required>
-    </label><br>
-    <label>Lecture Title:
-      <input type="text" name="title" required>
-    </label><br>
-    <label>Date:
-      <input type="date" name="date" required>
-    </label><br>
-    <button type="submit">Create Lecture</button>
-  </form>
+    <h1>Create New Lecture</h1>
+    <form action="/app/createLecture" method="POST">
+        {% csrf_token %}
+        <label>Select Course: <input type="text" name="choice" required></label><br>
+        <button type="submit">Submit</button>
+    </form>
 </body>
 </html>
