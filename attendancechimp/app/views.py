@@ -128,9 +128,17 @@ def create_course(request):
     end_time = request.POST.get('end-time')
     
     day_fields = {'day-mon': 'Mon', 'day-tue': 'Tue', 'day-wed': 'Wed', 'day-thu': 'Thu', 'day-fri': 'Fri'}
-    chosen_days = [value for key, value in day_fields.items() if request.POST.get(key)]
+    chosen_days = [label for key, label in day_fields.items() if request.POST.get(key)]
+    schedule = f"{','.join(chosen_days)} {start_time}-{end_time}".strip()
     
-    course = Course.objects.create(name=course_name, start_time=start_time, end_time=end_time, days=",".join(chosen_days), instructor=request.user.instructorprofile)
+    course_id_generator = random.randint(10000, 99999)
+    Course.objects.create(
+        course_id=course_id_generator,
+        course_title=course_name,
+        course_schedule=schedule,
+        instructor=request.user.instructorprofile
+    )
+    course = Course.objects.get(course_title=course_name)
     
     return HttpResponse("You have successfully created a course.", status=200)
 
@@ -156,17 +164,18 @@ def create_qr_code_upload(request):
     """Create a QRCodeUpload from a student's image upload"""
     if request.method != 'POST':
         return HttpResponse(status=405)
-    if not request.user.is_authenticated or not StudentProfile.objects.filter(user=request.user).exists():
+    if not (request.user.is_authenticated and hasattr(request.user, 'studentprofile'):
         return HttpResponse("Error: User must be a student.", status=401)
     
-    image = request.FILES.get("imageUpload")
-    if not image:
+    image_file = request.FILES.get("imageUpload")
+    if not image_file:
         return HttpResponse("Error: imageUpload file is missing.", status=400)
-
+    
+    qr_code_id = str(uuid.uuid4())
     QRCodeUpload.objects.create(
-        qrcode_id=str(uuid.uuid4()),
+        qrcode_id=qr_code_id,
         student_id=request.user.studentprofile,
-        pictur=image_file
+        picture=image_file
     )
     return HttpResponse("Your QR code has been successfully uploaded.", status=200)
 
