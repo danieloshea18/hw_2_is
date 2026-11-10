@@ -157,7 +157,7 @@ def create_lecture(request):
     except Course.DoesNotExist:
         return HttpResponse("Course does not exist.", status=404)
     
-    Lecture.objects.create(course=course)
+    Lecture.objects.create(course_id=course)
     return HttpResponse("You have successfully created a new lecture", status=200)
 
 @csrf_exempt
