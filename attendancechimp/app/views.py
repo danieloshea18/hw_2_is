@@ -159,9 +159,10 @@ def create_lecture(request):
     
     Lecture.objects.create(
         course_id=course,
-        date=timezone.now().date()
+        date=timezone.now().date(),
+        qr_identifier=str(uuid.uuid4())
     )
-
+    
     return HttpResponse("You have successfully created a new lecture", status=200)
 
 @csrf_exempt
