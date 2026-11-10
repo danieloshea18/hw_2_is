@@ -164,7 +164,7 @@ def create_qr_code_upload(request):
     """Create a QRCodeUpload from a student's image upload"""
     if request.method != 'POST':
         return HttpResponse(status=405)
-    if not (request.user.is_authenticated and hasattr(request.user, 'studentprofile'):
+    if not (request.user.is_authenticated and hasattr(request.user, 'studentprofile')):
         return HttpResponse("Error: User must be a student.", status=401)
     
     image_file = request.FILES.get("imageUpload")
