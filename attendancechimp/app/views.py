@@ -10,6 +10,7 @@ from django.http import (HttpResponse, HttpResponseForbidden,
                          HttpResponseBadRequest, JsonResponse)
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login
 from datetime import datetime
 import zoneinfo
@@ -114,7 +115,7 @@ def new_qr_upload(request):
     return render(request, "app/new_qr_upload.html")
 
 @csrf_exempt
-def createCourse(request):
+def create_course(request):
     """Creates a new Course row using POST data"""
     if request.method != 'POST':
         return HttpResponse(status=405)
