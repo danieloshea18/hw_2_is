@@ -18,6 +18,7 @@ import zoneinfo
 import json
 import io
 import uuid
+import random
 
 from .models import (InstructorProfile, StudentProfile, Course, Enrollment,
                       Lecture, QRCodeUpload)
@@ -192,7 +193,7 @@ def dump_uploads(request):
     data = [
         {
             "username": upload.student_id.user.username,
-            "upload_time": upload.upload_time.strftime("%Y-%m-%d %H:%M:%S")
+            "upload_time": upload.uploaded_at.strftime("%Y-%m-%d %H:%M:%S")
         }
         for upload in uploads
     ]
