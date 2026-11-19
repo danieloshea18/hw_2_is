@@ -124,7 +124,7 @@ def create_course(request):
     if not is_instructor(request.user):
         return HttpResponse("Error: user must be an instructor", status=401)
     
-    course_number = (request.POST.get('course-number') or request.POST.get('course') or request.POST.get(course_number') or request.POST.get(course-name))
+    course_number = (request.POST.get('course-number') or request.POST.get('course') or request.POST.get('course_number') or request.POST.get('course-name'))
     course_name = (request.POST.get('course-name') or request.POST.get('course_title') or course_number or "")
     start_time = request.POST.get('start_time') or request.POST.get('start-time') or None
     end_time = request.POST.get('end_time') or request.POST.get('end-time') or None
