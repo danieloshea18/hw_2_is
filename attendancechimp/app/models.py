@@ -25,6 +25,7 @@ import logging
 import string
 import random
 import zoneinfo
+import uuid
 
 logger = logging.getLogger(__name__) # set up tracking, auditing, and debugging
                                                                # allows using logger.warning(), logger.error(), 
@@ -100,8 +101,11 @@ class Lecture(models.Model):
 # QR Code Upload
 # ---------------------------------------------------------------------------
 
+def generate_qr_code_id():
+    return str(uuid.uuid4())
+
 class QRCodeUpload(models.Model):
-    qrcode_id = models.CharField(max_length=256, primary_key=True)
+    qrcode_id = models.CharField(max_length=256, primary_key=True, default=generate_qr_code_id)
     student_id = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
     lecture_id = models.ForeignKey(Lecture, on_delete=models.CASCADE, null=True, blank=True)
     picture = models.ImageField(null=True, blank=True)

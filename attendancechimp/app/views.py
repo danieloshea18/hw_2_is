@@ -203,12 +203,12 @@ def create_qr_code_upload(request):
             qr_data = decoded_img[0].data.decode("utf-8").strip()
             lecture = Lecture.objects.filter(qr_identifier=qr_data).first()
             if lecture is None:
-                logger.warning("QR has no assigned lecture", qr_data)
+                logger.warning("QR has no assigned lecture: %s", qr_data)
         else:
             logger.warning("Uploaded image doesn't contain a proper QR code")
         image_file.seek(0)
     except Exception as e:
-        logger.warning("QR decode was unsuccessful", e)
+        logger.warning("QR decode was unsuccessful: %s", e)
         try:
             image_file.seek(0)
         except Exception:
@@ -260,7 +260,7 @@ def getUploads(request):
         time_stamp = upload.uploaded_at
         if time_stamp and timezone.is_aware(time_stamp):
             time_stamp = timezone.localtime(time_stamp, CDT)
-        student_user = upload.student_id.user()
+        student_user = upload.student_id.user
         upload_info.append({
             "username": student_user.username if student_user else None,
             "upload_time": time_stamp.strftime("%Y-%m-%d %H:%M:%S"),
