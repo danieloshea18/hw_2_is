@@ -24,11 +24,13 @@ from datetime import datetime, time
 import logging
 import string
 import random
+import zoneinfo
 
 logger = logging.getLogger(__name__) # set up tracking, auditing, and debugging
                                                                # allows using logger.warning(), logger.error(), 
                                                                # logger.info(), etc. Better than print() for debuggin... 
 
+chicago_time = zoneinfo.ZoneInfo("America/Chicago")
 
 # ---------------------------------------------------------------------------
 # User profiles
@@ -148,7 +150,7 @@ def getUploadsForCourse(course):
         if not time_stamp:
             continue
         if timezone.is_aware(time_stamp):
-            time_stamp = timezone.localtime(time_stamp)
+            time_stamp = timezone.localtime(time_stamp, chicago_time)
         if not course_info.meets_on_day(time_stamp.weekday()):
             continue
         upload_time = time_stamp.time()

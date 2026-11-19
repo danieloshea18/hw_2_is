@@ -122,13 +122,22 @@ def create_course(request):
     """Creates a new Course row using POST data"""
     if request.method != 'POST':
         return HttpResponse(status=405)
-    if not request.user.is_authenticated or not InstructorProfile.objects.filter(user=request.user).exists():
+    if not is_instructor(request.user):
         return HttpResponse("Error: user must be an instructor", status=401)
     
+    course_number = request.POST.get('course-number')
     course_name = request.POST.get('course-name')
     start_time = request.POST.get('start-time')
     end_time = request.POST.get('end-time')
     
+    mon = bool(request.POST.get('day-mon'))
+    tue = bool(request.POST.get('day-tue'))
+    wed = bool(request.POST.get('day-wed'))
+    thu = bool(request.POST.get('day-thu'))
+    fri = bool(request.POST.get('day-fri'))
+    sat = bool(request.POST.get('day-sat'))
+    sun = bool(request.POST.get('day-sun'))
+
     day_fields = {'day-mon': 'Mon', 'day-tue': 'Tue', 'day-wed': 'Wed', 'day-thu': 'Thu', 'day-fri': 'Fri'}
     chosen_days = [label for key, label in day_fields.items() if request.POST.get(key)]
     schedule = f"{','.join(chosen_days)} {start_time}-{end_time}".strip()
@@ -136,9 +145,19 @@ def create_course(request):
     course_id_generator = random.randint(10000, 99999)
     Course.objects.create(
         course_id=course_id_generator,
+        course=course_number,
         course_title=course_name,
         course_schedule=schedule,
-        instructor=request.user.instructorprofile
+        instructor=request.user.instructorprofile,
+        mon=mon,
+        tue=tue,
+        wed=wed,
+        thu=thu,
+        fri=fri,
+        sat=sat,
+        sun=sun,
+        start_time=start_time,
+        end_time=end_time
     )
     course = Course.objects.get(course_title=course_name)
     
@@ -171,17 +190,31 @@ def create_qr_code_upload(request):
     """Create a QRCodeUpload from a student's image upload"""
     if request.method != 'POST':
         return HttpResponse(status=405)
-    if not (request.user.is_authenticated and hasattr(request.user, 'studentprofile')):
+    if not is_student(request.user):
         return HttpResponse("Error: User must be a student.", status=401)
     
     image_file = request.FILES.get("imageUpload")
     if not image_file:
         return HttpResponse("Error: imageUpload file is missing.", status=400)
     
+    lecture = None
+    try:
+        from PIL import Image
+        from pyzbar.pyzbar import decode
+        image = Image.open(image_file)
+        decoded_img = decode(image)
+        if decoded_img:
+            qr_data = decoded_img[0].data.decode("utf-8")
+            lecture = Lecture.objects.filter(qr_identifier=qr_data).first()
+        image_file.seek(0)
+    except Exception:
+        pass
+
     qr_code_id = str(uuid.uuid4())
     QRCodeUpload.objects.create(
         qrcode_id=qr_code_id,
         student_id=request.user.studentprofile,
+        lecture_id=lecture,
         picture=image_file
     )
     return HttpResponse("Your QR code has been successfully uploaded.", status=200)
@@ -225,7 +258,7 @@ def getUploads(request):
     for upload in viable_uploads:
         time_stamp = upload.uploaded_at
         if time_stamp and timezone.is_aware(time_stamp):
-            time_stamp = timezone.localtime(time_stamp)
+            time_stamp = timezone.localtime(time_stamp, CDT)
         upload_info.append({
             "username": upload.student_id.user.username,
             "upload_time": time_stamp.strftime("%Y-%m-%d %H:%M:%S"),
