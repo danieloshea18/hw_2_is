@@ -21,7 +21,8 @@ import uuid
 import random
 
 from .models import (InstructorProfile, StudentProfile, Course, Enrollment,
-                      Lecture, QRCodeUpload)
+                      Lecture, QRCodeUpload, getUploadsForCourse,
+                      is_instructor, is_student)
 
 from .models import InstructorProfile, StudentProfile
  
@@ -207,6 +208,30 @@ def dump_uploads(request):
 # ---------------------------------------------------------------------------
 # HW6  — getUploads
 # ---------------------------------------------------------------------------
+
+@require_GET
+def getUploads(request):
+    """Returns JSON list of valid QR code uploads for a course"""
+    if not is_instructor(request.user):
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+    
+    course = request.GET.get("course")
+    if not course:
+        return JsonResponse({"error": "Missing course parameter"}, status=400)
+    
+    viable_uploads = getUploadsForCourse(course)
+    upload_info = []
+
+    for upload in viable_uploads:
+        time_stamp = upload.uploaded_at
+        if time_stamp and timezone.is_aware(time_stamp):
+            time_stamp = timezone.localtime(time_stamp)
+        upload_info.append({
+            "username": upload.student_id.user.username,
+            "upload_time": time_stamp.strftime("%Y-%m-%d %H:%M:%S"),
+        })
+
+    return JsonResponse(upload_info, safe=False)
 
 
 
