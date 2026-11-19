@@ -24,8 +24,6 @@ from .models import (InstructorProfile, StudentProfile, Course, Enrollment,
                       Lecture, QRCodeUpload, getUploadsForCourse,
                       is_instructor, is_student)
 
-from .models import InstructorProfile, StudentProfile
- 
 CDT = zoneinfo.ZoneInfo("America/Chicago")
 
 
@@ -79,9 +77,9 @@ def create_user(request):
     email = request.POST.get('email')
     user_name = request.POST.get('user_name')
     password = request.POST.get('password')
-    is_student = request.POST.get('is_student')
+    indv_role = request.POST.get('is_student')
 
-    if not (email and user_name and password and is_student):
+    if not (email and user_name and password and indv_role):
         return HttpResponseBadRequest("Missing required field(s)")
    
     if User.objects.filter(email=email).exists():
@@ -90,7 +88,7 @@ def create_user(request):
         return HttpResponseBadRequest("Username already taken")
 
     user = User.objects.create_user(username=user_name, email=email, password=password)
-    if is_student in ('0', 'instructor'):
+    if indv_role in ('0', 'instructor'):
         InstructorProfile.objects.create(user=user)
     else:
         StudentProfile.objects.create(user=user)
@@ -159,7 +157,6 @@ def create_course(request):
         start_time=start_time,
         end_time=end_time
     )
-    course = Course.objects.get(course_title=course_name)
     
     return HttpResponse("You have successfully created a course.", status=200)
 
@@ -168,13 +165,12 @@ def create_lecture(request):
     """Creates a new lecture linked to a particular course"""
     if request.method != 'POST':
         return HttpResponse(status=405)
-    if not request.user.is_authenticated or not InstructorProfile.objects.filter(user=request.user).exists():
+    if not is_instructor(request.user):
         return HttpResponse("Error: User must be an instructor.", status=401)
     
-    course_name = request.POST.get('choice')
-    try:
-        course = Course.objects.get(course_title=course_name)
-    except Course.DoesNotExist:
+    choice = request.POST.get('choice')
+    course = (Course.objects.filter(course=choice).first() or Course.objects.filter(course_title=choice).first())
+    if course is None:
         return HttpResponse("Course does not exist.", status=404)
     
     Lecture.objects.create(
@@ -204,15 +200,22 @@ def create_qr_code_upload(request):
         image = Image.open(image_file)
         decoded_img = decode(image)
         if decoded_img:
-            qr_data = decoded_img[0].data.decode("utf-8")
+            qr_data = decoded_img[0].data.decode("utf-8").strip()
             lecture = Lecture.objects.filter(qr_identifier=qr_data).first()
+            if lecture is None:
+                logger.warning("QR has no assigned lecture", qr_data)
+        else:
+            logger.warning("Uploaded image doesn't contain a proper QR code")
         image_file.seek(0)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning("QR decode was unsuccessful", e)
+        try:
+            image_file.seek(0)
+        except Exception:
+            pass
 
-    qr_code_id = str(uuid.uuid4())
     QRCodeUpload.objects.create(
-        qrcode_id=qr_code_id,
+        qrcode_id=str(uuid.uuid4()),
         student_id=request.user.studentprofile,
         lecture_id=lecture,
         picture=image_file
@@ -252,15 +255,14 @@ def getUploads(request):
     if not course:
         return JsonResponse({"error": "Missing course parameter"}, status=400)
     
-    viable_uploads = getUploadsForCourse(course)
     upload_info = []
-
-    for upload in viable_uploads:
+    for upload in getUploadsForCourse(course):
         time_stamp = upload.uploaded_at
         if time_stamp and timezone.is_aware(time_stamp):
             time_stamp = timezone.localtime(time_stamp, CDT)
+        student_user = upload.student_id.user()
         upload_info.append({
-            "username": upload.student_id.user.username,
+            "username": student_user.username if student_user else None,
             "upload_time": time_stamp.strftime("%Y-%m-%d %H:%M:%S"),
         })
 
