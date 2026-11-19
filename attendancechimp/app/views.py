@@ -19,13 +19,14 @@ import json
 import io
 import uuid
 import random
+import logging
 
 from .models import (InstructorProfile, StudentProfile, Course, Enrollment,
                       Lecture, QRCodeUpload, getUploadsForCourse,
                       is_instructor, is_student)
 
 CDT = zoneinfo.ZoneInfo("America/Chicago")
-
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # HW2  — index, time, sum
@@ -123,18 +124,18 @@ def create_course(request):
     if not is_instructor(request.user):
         return HttpResponse("Error: user must be an instructor", status=401)
     
-    course_number = request.POST.get('course-number')
-    course_name = request.POST.get('course-name')
-    start_time = request.POST.get('start-time')
-    end_time = request.POST.get('end-time')
+    course_number = (request.POST.get('course-number') or request.POST.get('course') or request.POST.get(course_number') or request.POST.get(course-name))
+    course_name = (request.POST.get('course-name') or request.POST.get('course_title') or course_number or "")
+    start_time = request.POST.get('start_time') or request.POST.get('start-time') or None
+    end_time = request.POST.get('end_time') or request.POST.get('end-time') or None
     
-    mon = bool(request.POST.get('day-mon'))
-    tue = bool(request.POST.get('day-tue'))
-    wed = bool(request.POST.get('day-wed'))
-    thu = bool(request.POST.get('day-thu'))
-    fri = bool(request.POST.get('day-fri'))
-    sat = bool(request.POST.get('day-sat'))
-    sun = bool(request.POST.get('day-sun'))
+    mon = (request.POST.get('mon') or request.POST.get('day-mon') or '').strip().lower() in ('true', '1', 'on', 'yes')
+    tue = (request.POST.get('tue') or request.POST.get('day-tue') or '').strip().lower() in ('true', '1', 'on', 'yes')
+    wed = (request.POST.get('wed') or request.POST.get('day-wed') or '').strip().lower() in ('true', '1', 'on', 'yes')
+    thu = (request.POST.get('thu') or request.POST.get('day-thu') or '').strip().lower() in ('true', '1', 'on', 'yes')
+    fri = (request.POST.get('fri') or request.POST.get('day-fri') or '').strip().lower() in ('true', '1', 'on', 'yes')
+    sat = (request.POST.get('sat') or request.POST.get('day-sat') or '').strip().lower() in ('true', '1', 'on', 'yes')
+    sun = (request.POST.get('sun') or request.POST.get('day-sun') or '').strip().lower() in ('true', '1', 'on', 'yes')
 
     day_fields = {'day-mon': 'Mon', 'day-tue': 'Tue', 'day-wed': 'Wed', 'day-thu': 'Thu', 'day-fri': 'Fri'}
     chosen_days = [label for key, label in day_fields.items() if request.POST.get(key)]
@@ -168,7 +169,7 @@ def create_lecture(request):
     if not is_instructor(request.user):
         return HttpResponse("Error: User must be an instructor.", status=401)
     
-    choice = request.POST.get('choice')
+    choice = request.POST.get('choice') or request.POST.get('course') or request.POST.get('course_id')
     course = (Course.objects.filter(course=choice).first() or Course.objects.filter(course_title=choice).first())
     if course is None:
         return HttpResponse("Course does not exist.", status=404)
